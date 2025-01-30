@@ -1,20 +1,30 @@
-import{
-    initializeApp,
-    getApps,
-    App,
-    getApp,
-    cert,
-} from "firebase-admin/app";
+import { initializeApp, getApps, App, getApp, cert } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
-const serviceKey =require("@/service_key.json");
-let app:App;
-if(getApps().length === 0){
-    app = initializeApp({
-        credential:cert(serviceKey),
-    });
+
+let app: App;
+
+// Safely load the service account key from environment variables
+const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_KEY_BASE64
+  ? JSON.parse(
+      Buffer.from(
+        process.env.FIREBASE_SERVICE_ACCOUNT_KEY_BASE64,
+        "base64"
+      ).toString("utf-8")
+    )
+  : null;
+
+if (!serviceAccount) {
+  throw new Error("Missing Firebase service account configuration");
 }
-else{
-    app = getApp();
+
+if (getApps().length === 0) {
+  app = initializeApp({
+    credential: cert(serviceAccount),
+  });
+} else {
+  app = getApp();
 }
-const adminDb=getFirestore(app);
-export {app as adminApp,adminDb};
+
+const adminDb = getFirestore(app);
+
+export { app as adminApp, adminDb };
